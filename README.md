@@ -1,9 +1,9 @@
 # LearnAndPractice
-# Learn much, Practice more.
-# Hello guys, welcome to learn tech-konwledge with me.
-# Let's start.
+> Learn much, Practice more.
+> Hello guys, welcome to learn tech-konwledge with me.
+>Let's start.
 ---------------------------------
-Beautiful is better than ugly.
+- Beautiful is better than ugly.
 Explicit is better than implicit.
 Simple is better than complex.
 Complex is better than complicated.
