@@ -3,8 +3,7 @@
 - 测试开发工程师，可能名称上有不同，但内涵是一致的：熟悉业务逻辑、测试技能的同时，具备代码能力，开发测试框架/工具、自动化测试脚本的编写及执行。将重复冗杂的工作交给自动化，人工处理关键复杂场景测试，高效配合，也是行业趋势。
 - Python语言近年大火，用途甚广：Web开发（YouTube）、深度学习（AI）、爬虫、数据分析、自动化脚本。作为脚本语言，Python自带的UnitTest库即可做单元测试，也可做接口自动化，基于Urllib开发的第三方Requests库更是测试最常用库之一，Selenium/Appium也是UI自动化的主流，再加上最关键的对新手友好，可以得出结论：学。
 - 本文记录了学习极客时间尹会生老师Python课的一些关键知识点，之后会更新将Python用于接口自动化的实际应用场景。
-- 我在Github同步了系列文章，欢迎交流。
-https://github.com/theodorezz/LearnAndPractice
+
 ![Python基础](https://img-blog.csdnimg.cn/20200501141210910.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dpbmRzZWV5b3U=,size_16,color_FFFFFF,t_70)
 
 ## 1.变量
