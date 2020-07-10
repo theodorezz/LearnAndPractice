@@ -1,0 +1,149 @@
+#/bin/sh/python
+#-coding-:utf-8
+import sys
+import os
+import uuid
+import time
+import random
+import boto3
+import threading
+
+fordelete = []  # new_device_id输出为list，删除时从list随机选择id
+
+
+def exception():
+    e = random.randint(1,7)
+    if e == 1:
+        os.system("kubectl apply -f k8s_node_cpu_load.yaml")
+        print("异常种类：CPU负载")
+    elif e == 2:
+        os.system("kubectl apply -f k8s_node_mem_load.yaml")
+        print("异常种类：内存负载")
+    elif e == 3:
+        os.system("kubectl apply -f k8s_node_network_delay.yaml")
+        print("异常种类：网络延迟")
+    elif e == 4:
+        os.system("kubectl apply -f k8s_node_network_loss.yaml")
+        print("异常种类：网络丢包")
+    elif e == 5:
+        os.system("kubectl apply -f k8s_node_network_reorder.yaml")
+        print("异常种类：网络乱序")
+    elif e == 6:
+        os.system("kubectl apply -f k8s_node_network_dns.yaml")
+        print("异常种类：域名篡改")
+    else:
+        os.system("kubectl apply -f k8s_node_disk_fill_percent.yaml")
+        print("异常种类：磁盘负载")
+    print("正在注入故障，请等待")
+    time.sleep(30)
+    print("故障注入完成\n")
+    
+
+
+def create_statefulset():
+    old_device_id = "test"
+    old_cpu = "250m"
+    old_mem = "512Mi"
+    
+    i = 0
+    while True:
+        d = {"250m": "512Mi", "375m": "750Mi", "500m": "1Gi", "1000m": "2Gi", "1500m": "3Gi"}
+        new_device_id = 'eeee-' + str(uuid.uuid4())
+        new_cpu = random.choice(list(d.keys()))
+        new_mem = d[new_cpu]
+
+        file_list = ['/home/ubuntu/cloud-based-controller/headless-service.yaml',
+                     '/home/ubuntu/cloud-based-controller/statefulset.yaml', ]
+
+
+        for file in file_list:
+
+            file_data = ""
+            with open(file, "r", encoding="utf-8") as f:
+                for line in f:
+                    if old_device_id in line:
+                        line = line.replace(old_device_id, new_device_id)
+                    if old_cpu in line:
+                        line = line.replace(old_cpu, new_cpu)
+                    if old_mem in line:
+                        line = line.replace(old_mem, new_mem)
+                    file_data += line
+
+            with open('deployment.yaml', "w", encoding="utf-8") as f:
+                f.write(file_data)
+                
+            
+            os.system("kubectl apply -f deployment.yaml -n cloud-based-controller")
+        fordelete.append(new_device_id)  # 已创建资源的id加入list
+        print("资源创建中，请等待")
+        time.sleep(240)
+        print("资源创建成功\n")
+        print("当前device_id列表%s" % fordelete)
+        i += 1  # 用i计数执行次数
+        print("当前已执行循环%s次"%i)
+
+def clean_k8s_resource():
+    statefulset_suffix = "-ss"
+    headless_service_suffix = "-hs"
+    pod_suffix = "-ss-0"
+    pvc_suffix = "-pvc"
+    from kubernetes import client, config
+
+    # load ~/.kube/config
+    config.load_kube_config()
+
+    coreV1Api = client.CoreV1Api()
+    appsV1Api = client.AppsV1Api()
+
+    namespace = 'cloud-based-controller'
+
+    # device_id = device_id.lower()
+
+    while True:
+        if len(fordelete) > 0:  # 循环执行
+            
+            
+            time.sleep(240) # 有可能创建的资源暂时在集群中还没来得及记录，这时删除会报错找不到资源
+            print("4分钟后开始执行删除\n")
+
+            device_id = random.choice(fordelete)  # 随机从list中选择device_id
+            statefulset_name = device_id + statefulset_suffix
+            service_name = device_id + headless_service_suffix
+            pvc_name = device_id + pvc_suffix + "-" + device_id + pod_suffix       
+
+            # statefulset
+            os.system("kubectl delete statefulset %s -n cloud-based-controller" % statefulset_name)
+
+            # headless service
+            os.system("kubectl delete service %s -n cloud-based-controller" % service_name)
+
+            # persistent volume claim
+            os.system("kubectl delete pvc %s -n cloud-based-controller" % pvc_name)
+            
+            print('删除"%s"成功\n' % device_id)
+
+            fordelete.remove(device_id)
+
+
+# threads = []   #多线程，同时执行
+
+# print(threads)
+
+if __name__ == "__main__":
+
+    exception()
+
+    create_thread = threading.Thread(target=create_statefulset)
+    create_thread.start()
+
+    delete_thread = threading.Thread(target=clean_k8s_resource)
+    delete_thread.start()
+
+#    create_statefulset()
+
+#    while len(fordelete) > 0:
+#        device_id = random.choice(fordelete)  # 随机从list中选择device_id
+#        print("device di: %s" % device_id)
+#        clean_k8s_resource(device_id)
+#        print("成功delete")
+
